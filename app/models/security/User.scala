@@ -19,7 +19,7 @@ object User {
   implicit object UserWrites extends OWrites[User] {
     def writes(user: User): JsObject =
       user.id match {
-        case Some(id) =>
+        case Some(_) =>
           Json.obj(
             "_id" -> user.id,
             "loginInfo" -> Json.obj(
@@ -33,7 +33,7 @@ object User {
             "avatarURL" -> user.avatarURL,
             "activated" -> user.activated
           )
-        case _ =>
+        case None =>
           Json.obj(
             "loginInfo" -> Json.obj(
               "providerID" -> user.loginInfo.providerID,
@@ -47,43 +47,42 @@ object User {
             "activated" -> user.activated
           )
       }
+  }
 
-    implicit object UserReads extends Reads[User] {
-      def reads(json: JsValue): JsResult[User] = json match {
-        case user: JsObject =>
-          Try {
-            val id = (user \ "_id" \ "$oid").asOpt[String]
+  implicit object UserReads extends Reads[User] {
+    def reads(json: JsValue): JsResult[User] = json match {
+      case user: JsObject =>
+        Try {
+          val id = (user \ "_id" \ "$oid").asOpt[String]
 
-            val providerId = (user \ "loginInfo" \ "providerID").as[String]
-            val providerKey = (user \ "loginInfo" \ "providerKey").as[String]
+          val providerId = (user \ "loginInfo" \ "providerID").as[String]
+          val providerKey = (user \ "loginInfo" \ "providerKey").as[String]
 
-            val username = (user \ "userName").as[String]
-            val email = (user \ "email").as[String]
-            val firstName = (user \ "firstName").as[String]
-            val lastName = (user \ "lastName").as[String]
-            val avatarURL = (user \ "avatarURL").asOpt[String]
-            val activated = (user \ "activated").as[Boolean]
+          val username = (user \ "userName").as[String]
+          val email = (user \ "email").as[String]
+          val firstName = (user \ "firstName").as[String]
+          val lastName = (user \ "lastName").as[String]
+          val avatarURL = (user \ "avatarURL").asOpt[String]
+          val activated = (user \ "activated").as[Boolean]
 
-            JsSuccess(
-              new User(
-                id,
-                new LoginInfo(providerId, providerKey),
-                username,
-                email,
-                firstName,
-                lastName,
-                avatarURL,
-                activated
-              )
+          JsSuccess(
+            new User(
+              id,
+              new LoginInfo(providerId, providerKey),
+              username,
+              email,
+              firstName,
+              lastName,
+              avatarURL,
+              activated
             )
-          } match {
-            case Success(value) => value
-            case Failure(cause) => JsError(cause.getMessage)
-          }
-        case _ => JsError("expected.jsobject")
-      }
+          )
+        } match {
+          case Success(value) => value
+          case Failure(cause) => JsError(cause.getMessage)
+        }
+      case _ => JsError("expected.jsobject")
     }
-
   }
 
 }
